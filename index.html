@@ -25,12 +25,55 @@
     const app = initializeApp(firebaseConfig);
     window.db = getFirestore(app);
     window.storage = getStorage(app);
+
+    // Exponer funciones al objeto global
+    window.mostrarSeccion = (seccion) => {
+      document.getElementById('registro').classList.add('hidden');
+      document.getElementById('historial').classList.add('hidden');
+      document.getElementById(seccion).classList.remove('hidden');
+    };
+
+    window.registrarRetiro = async () => {
+      const nombreAyudante = document.getElementById('nombreAyudante').value;
+      const personaEntrega = document.getElementById('personaEntrega').value;
+      const evidenciaFoto = document.getElementById('evidenciaFoto').files[0];
+
+      if (!nombreAyudante || !personaEntrega || !evidenciaFoto) {
+        alert('Por favor, complete todos los campos');
+        return;
+      }
+
+      const fechaHoraRetiro = new Date().toLocaleString();
+      const storageRef = storage.ref('evidencias/' + evidenciaFoto.name);
+      await storageRef.put(evidenciaFoto);
+      const evidenciaURL = await storageRef.getDownloadURL();
+
+      // Guardamos el registro en Firestore
+      const registro = {
+        nombreAyudante,
+        personaEntrega,
+        fechaHoraRetiro,
+        evidenciaURL,
+        devuelto: false,
+        fechaHoraDevolucion: ""
+      };
+
+      await db.collection('historial').add(registro);
+      
+      // Limpiar formulario y actualizar la tabla
+      document.getElementById('nombreAyudante').value = '';
+      document.getElementById('personaEntrega').value = '';
+      document.getElementById('evidenciaFoto').value = '';
+      actualizarHistorial();
+    };
+
+    // Otras funciones...
   </script>
 </head>
 <body>
   <!-- Título y Logo -->
   <h1>Control de T2P</h1>
-  <img id="logo" src="LOGO CDG COLOR.png" alt="Logo">
+  <img id="logo" src="ruta/al/logo.png" alt="Logo">
 
   <!-- Botones de menú -->
   <div class="menu-buttons">
@@ -87,3 +130,4 @@
   <script src="script.js" type="module"></script>
 </body>
 </html>
+
