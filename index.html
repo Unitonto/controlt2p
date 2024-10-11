@@ -114,27 +114,29 @@
         };
 
         // Función para limpiar el historial
-        window.limpiarHistorial = async () => {
-            const password = document.getElementById('passwordInput').value;
+       window.limpiarHistorial = async () => {
+    const password = document.getElementById('passwordInput').value;
 
-            // Cambia esto por la contraseña que desees
-            const correctPassword = "tuContraseñaSegura"; // Cambia por tu contraseña
-            
-            if (password === correctPassword) {
-                // Limpiar el historial en Firestore
-                const snapshot = await getDocs(collection(db, 'historial'));
-                const batch = db.batch();
-                snapshot.docs.forEach((doc) => {
-                    batch.delete(doc.ref);
-                });
-                await batch.commit();
-                actualizarHistorial(); // Actualiza la tabla después de limpiar
-                alert('Historial limpiado con éxito.');
-                document.getElementById('passwordInput').value = ''; // Limpiar el campo de entrada
-            } else {
-                alert('Contraseña incorrecta. Inténtalo de nuevo.');
-            }
-        };
+    // Cambia esto por la contraseña que desees
+    const correctPassword = "tuContraseñaSegura"; // Cambia por tu contraseña
+    
+    if (password === correctPassword) {
+        // Limpiar el historial en Firestore
+        const snapshot = await getDocs(collection(db, 'historial'));
+        const batch = writeBatch(db); // Crear un nuevo batch
+
+        snapshot.docs.forEach((doc) => {
+            batch.delete(doc.ref); // Agregar la operación de eliminación al batch
+        });
+
+        await batch.commit(); // Ejecutar todas las operaciones de eliminación en el batch
+        actualizarHistorial(); // Actualiza la tabla después de limpiar
+        alert('Historial limpiado con éxito.');
+        document.getElementById('passwordInput').value = ''; // Limpiar el campo de entrada
+    } else {
+        alert('Contraseña incorrecta. Inténtalo de nuevo.');
+    }
+};
 
         // Cargar historial al inicio
         document.addEventListener('DOMContentLoaded', actualizarHistorial);
