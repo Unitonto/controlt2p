@@ -1,9 +1,59 @@
+// Cargar historial al inicio
+document.addEventListener('DOMContentLoaded', actualizarHistorial);
+
+// Función para mostrar la imagen ampliada en el modal
+window.verImagen = (url) => {
+    document.getElementById('modalImage').src = url;
+    document.getElementById('modal').style.display = 'flex';
+};
+
+// Función para cerrar el modal
+window.cerrarModal = () => {
+    document.getElementById('modal').style.display = 'none';
+    document.getElementById('modalImage').src = '';
+};
+
+// Función para registrar retiro
+window.registrarRetiro = async () => {
+    const nombreAyudante = document.getElementById('nombreAyudante').value;
+    const personaEntrega = document.getElementById('personaEntrega').value;
+    const evidenciaFoto = document.getElementById('evidenciaFoto').files[0];
+
+    if (!nombreAyudante || !personaEntrega || !evidenciaFoto) {
+        alert('Por favor, complete todos los campos');
+        return;
+    }
+
+    const fechaHoraRetiro = new Date().toLocaleString();
+    const storageRef = ref(storage, 'evidencias/' + evidenciaFoto.name);
+    await uploadBytes(storageRef, evidenciaFoto);
+    const evidenciaURL = await getDownloadURL(storageRef);
+
+    // Guardamos el registro en Firestore
+    const registro = {
+        nombreAyudante,
+        personaEntrega,
+        fechaHoraRetiro,
+        evidenciaURL,
+        devuelto: false,
+        fechaHoraDevolucion: ""
+    };
+
+    await addDoc(collection(db, 'historial'), registro);
+    
+    // Limpiar formulario y actualizar la tabla
+    document.getElementById('nombreAyudante').value = '';
+    document.getElementById('personaEntrega').value = '';
+    document.getElementById('evidenciaFoto').value = '';
+    actualizarHistorial();
+};
+
 // Función para actualizar el historial en la tabla
-async function actualizarHistorial() {
+window.actualizarHistorial = async () => {
     const tbody = document.getElementById('historial').querySelector('tbody');
     tbody.innerHTML = '';
     
-    const snapshot = await db.collection('historial').get();
+    const snapshot = await getDocs(collection(db, 'historial'));
     snapshot.forEach(doc => {
         const registro = doc.data();
         const row = document.createElement('tr');
@@ -19,31 +69,20 @@ async function actualizarHistorial() {
         `;
         tbody.appendChild(row);
     });
-}
+};
 
 // Función para marcar como devuelto
-async function marcarDevolucion(docId) {
-    await db.collection('historial').doc(docId).update({
+window.marcarDevolucion = async (docId) => {
+    const docRef = doc(db, 'historial', docId);
+    await updateDoc(docRef, {
         devuelto: true,
         fechaHoraDevolucion: new Date().toLocaleString()
     });
     actualizarHistorial();
-}
-
-// Función para mostrar la imagen ampliada en el modal
-function verImagen(url) {
-    document.getElementById('modalImage').src = url;
-    document.getElementById('modal').style.display = 'flex';
-}
-
-// Función para cerrar el modal
-function cerrarModal() {
-    document.getElementById('modal').style.display = 'none';
-    document.getElementById('modalImage').src = '';
-}
+};
 
 // Función para limpiar el historial
-async function limpiarHistorial() {
+window.limpiarHistorial = async () => {
     const password = document.getElementById('passwordInput').value;
 
     // Cambia esto por la contraseña que desees
@@ -51,7 +90,7 @@ async function limpiarHistorial() {
     
     if (password === correctPassword) {
         // Limpiar el historial en Firestore
-        const snapshot = await db.collection('historial').get();
+        const snapshot = await getDocs(collection(db, 'historial'));
         const batch = db.batch();
         snapshot.docs.forEach((doc) => {
             batch.delete(doc.ref);
@@ -63,7 +102,4 @@ async function limpiarHistorial() {
     } else {
         alert('Contraseña incorrecta. Inténtalo de nuevo.');
     }
-}
-
-// Cargar historial al inicio
-document.addEventListener('DOMContentLoaded', actualizarHistorial);
+};
