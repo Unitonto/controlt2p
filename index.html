@@ -89,7 +89,51 @@
             });
         };
 
-        // Otras funciones...
+        // Función para ver imagen ampliada
+        window.verImagen = (url) => {
+            document.getElementById('modalImage').src = url;
+            document.getElementById('modal').style.display = 'flex';
+        };
+
+        // Función para cerrar el modal
+        window.cerrarModal = () => {
+            document.getElementById('modal').style.display = 'none';
+            document.getElementById('modalImage').src = '';
+        };
+
+        // Función para marcar como devuelto
+        window.marcarDevolucion = async (docId) => {
+            const docRef = doc(db, 'historial', docId);
+            await updateDoc(docRef, {
+                devuelto: true,
+                fechaHoraDevolucion: new Date().toLocaleString()
+            });
+            actualizarHistorial();
+        };
+
+        // Función para limpiar el historial
+        window.limpiarHistorial = async () => {
+            const password = document.getElementById('passwordInput').value;
+
+            // Cambia esto por la contraseña que desees
+            const correctPassword = "tuContraseñaSegura"; // Cambia por tu contraseña
+            
+            if (password === correctPassword) {
+                // Limpiar el historial en Firestore
+                const snapshot = await getDocs(collection(db, 'historial'));
+                const batch = db.batch();
+                snapshot.docs.forEach((doc) => {
+                    batch.delete(doc.ref);
+                });
+                await batch.commit();
+                actualizarHistorial(); // Actualiza la tabla después de limpiar
+                alert('Historial limpiado con éxito.');
+                document.getElementById('passwordInput').value = ''; // Limpiar el campo de entrada
+            } else {
+                alert('Contraseña incorrecta. Inténtalo de nuevo.');
+            }
+        };
+
     </script>
 </head>
 <body>
