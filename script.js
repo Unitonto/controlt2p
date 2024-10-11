@@ -1,19 +1,3 @@
-// Configuración de Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyDGoBcYaPDQsMFxreFIjn0XraHdkfq3lqc",
-  authDomain: "controldet2p.firebaseapp.com",
-  projectId: "controldet2p",
-  storageBucket: "controldet2p.appspot.com",
-  messagingSenderId: "683643469531",
-  appId: "1:683643469531:web:5c81f09d8361a427e696fe",
-  measurementId: "G-MS62MDX4VX"
-};
-
-// Inicializar Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const storage = firebase.storage();
-
 // Función para mostrar la sección seleccionada
 function mostrarSeccion(seccion) {
   document.getElementById('registro').classList.add('hidden');
