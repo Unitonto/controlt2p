@@ -75,4 +75,23 @@ window.mostrarSeccion = function(seccion) {
   
   // Cargar historial al inicio
   document.addEventListener('DOMContentLoaded', actualizarHistorial);
+
+// Función para limpiar el historial
+function limpiarHistorial() {
+  const password = document.getElementById('passwordInput').value;
+  
+  // Cambia esto por la contraseña que desees
+  const correctPassword = "Guarambare2024"; // Cambia por tu contraseña
+  
+  if (password === correctPassword) {
+    // Limpiar el historial en localStorage
+    localStorage.removeItem('historial');
+    actualizarHistorial(); // Actualiza la tabla después de limpiar
+    alert('Historial limpiado con éxito.');
+    document.getElementById('passwordInput').value = ''; // Limpiar el campo de entrada
+  } else {
+    alert('Contraseña incorrecta. Inténtalo de nuevo.');
+  }
+}
+
   
