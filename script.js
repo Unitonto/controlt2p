@@ -86,7 +86,7 @@ window.limpiarHistorial = async () => {
     const password = document.getElementById('passwordInput').value;
 
     // Cambia esto por la contraseña que desees
-    const correctPassword = "tuContraseñaSegura"; // Cambia por tu contraseña
+    const correctPassword = "Guarambare2024"; // Cambia por tu contraseña
     
     if (password === correctPassword) {
         // Limpiar el historial en Firestore
