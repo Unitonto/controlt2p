@@ -8,7 +8,7 @@
     <script type="module">
         // Importar Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, writeBatch } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
 
         const firebaseConfig = {
@@ -114,29 +114,29 @@
         };
 
         // Función para limpiar el historial
-       window.limpiarHistorial = async () => {
-    const password = document.getElementById('passwordInput').value;
+        window.limpiarHistorial = async () => {
+            const password = document.getElementById('passwordInput').value;
 
-    // Cambia esto por la contraseña que desees
-    const correctPassword = "tuContraseñaSegura"; // Cambia por tu contraseña
-    
-    if (password === correctPassword) {
-        // Limpiar el historial en Firestore
-        const snapshot = await getDocs(collection(db, 'historial'));
-        const batch = writeBatch(db); // Crear un nuevo batch
+            // Cambia esto por la contraseña que desees
+            const correctPassword = "tuContraseñaSegura"; // Cambia por tu contraseña
+            
+            if (password === correctPassword) {
+                // Limpiar el historial en Firestore
+                const snapshot = await getDocs(collection(db, 'historial'));
+                const batch = writeBatch(db); // Crear un nuevo batch
 
-        snapshot.docs.forEach((doc) => {
-            batch.delete(doc.ref); // Agregar la operación de eliminación al batch
-        });
+                snapshot.docs.forEach((doc) => {
+                    batch.delete(doc.ref); // Agregar la operación de eliminación al batch
+                });
 
-        await batch.commit(); // Ejecutar todas las operaciones de eliminación en el batch
-        actualizarHistorial(); // Actualiza la tabla después de limpiar
-        alert('Historial limpiado con éxito.');
-        document.getElementById('passwordInput').value = ''; // Limpiar el campo de entrada
-    } else {
-        alert('Contraseña incorrecta. Inténtalo de nuevo.');
-    }
-};
+                await batch.commit(); // Ejecutar todas las operaciones de eliminación en el batch
+                actualizarHistorial(); // Actualiza la tabla después de limpiar
+                alert('Historial limpiado con éxito.');
+                document.getElementById('passwordInput').value = ''; // Limpiar el campo de entrada
+            } else {
+                alert('Contraseña incorrecta. Inténtalo de nuevo.');
+            }
+        };
 
         // Cargar historial al inicio
         document.addEventListener('DOMContentLoaded', actualizarHistorial);
@@ -173,31 +173,33 @@
             <thead>
                 <tr>
                     <th>Ayudante</th>
-                    <th>Entregado por</th>
+                    <th>Persona Entrega</th>
                     <th>Fecha y Hora de Retiro</th>
                     <th>Evidencia</th>
-                    <th>Fecha y Hora de Devolución</th>
-                    <th>Devolución</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
-            <tbody>
-                <!-- Aquí se insertarán las filas de historial -->
-            </tbody>
+            <tbody></tbody>
         </table>
-    </div>
-
-    <!-- Sección de limpieza de historial -->
-    <div class="container">
-        <h2>Limpiar Historial</h2>
-        <label>Contraseña:</label>
-        <input type="password" id="passwordInput" placeholder="Introduce la contraseña" required>
         <button onclick="limpiarHistorial()">Limpiar Historial</button>
+        <input type="password" id="passwordInput" placeholder="Contraseña para limpiar">
     </div>
 
-    <!-- Modal para ver la imagen ampliada -->
+    <!-- Modal para ver imagen -->
     <div id="modal" class="modal" onclick="cerrarModal()">
-        <img id="modalImage" src="" alt="Evidencia Ampliada">
+        <img id="modalImage" class="modal-content">
     </div>
+
+    <!-- Estilo CSS (opcional) -->
+    <style>
+        .hidden { display: none; }
+        .container { margin: 20px; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); align-items: center; justify-content: center; }
+        .modal-content { max-width: 90%; max-height: 90%; }
+        /* Estilos adicionales aquí */
+    </style>
 </body>
 </html>
+
 
