@@ -5,16 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Control de T2P</title>
   <link rel="stylesheet" href="style.css">
+  <!-- Importar Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js"></script>
 </head>
 <body>
+  <!-- Título y Logo -->
   <h1>Control de T2P</h1>
   <img id="logo" src="LOGO CDG COLOR.png" alt="Logo">
 
+  <!-- Botones de menú -->
   <div class="menu-buttons">
     <button onclick="mostrarSeccion('registro')">Registrar Retiro</button>
     <button onclick="mostrarSeccion('historial')">Ver Historial</button>
   </div>
 
+  <!-- Sección de registro -->
   <div id="registro" class="container">
     <label>Nombre del Ayudante:</label>
     <input type="text" id="nombreAyudante" placeholder="Nombre del Ayudante" required>
@@ -25,9 +32,10 @@
     <label>Evidencia Fotográfica:</label>
     <input type="file" id="evidenciaFoto" accept="image/*" capture="camera">
     
-    <button id="registrarBtn">Registrar Retiro</button>
+    <button onclick="registrarRetiro()">Registrar Retiro</button>
   </div>
 
+  <!-- Sección de historial -->
   <div id="historial" class="container hidden">
     <table>
       <thead>
@@ -46,130 +54,7 @@
     </table>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-storage.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDGoBcYaPDQsMFxreFIjn0XraHdkfq3lqc",
-      authDomain: "controldet2p.firebaseapp.com",
-      projectId: "controldet2p",
-      storageBucket: "controldet2p.appspot.com",
-      messagingSenderId: "683643469531",
-      appId: "1:683643469531:web:5c81f09d8361a427e696fe",
-      measurementId: "G-MS62MDX4VX"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const storage = getStorage(app);
-
-    // Funciones globales
-    window.mostrarSeccion = function(seccion) {
-      document.getElementById('registro').classList.add('hidden');
-      document.getElementById('historial').classList.add('hidden');
-      document.getElementById(seccion).classList.remove('hidden');
-    };
-
-    window.registrarRetiro = async function() {
-      const nombreAyudante = document.getElementById('nombreAyudante').value;
-      const personaEntrega = document.getElementById('personaEntrega').value;
-      const evidenciaFoto = document.getElementById('evidenciaFoto').files[0];
-
-      if (!nombreAyudante || !personaEntrega || !evidenciaFoto) {
-        alert('Por favor, complete todos los campos');
-        return;
-      }
-
-      const fechaHoraRetiro = new Date().toLocaleString();
-      const imageRef = ref(storage, `evidencias/${evidenciaFoto.name}`);
-
-      // Subir el archivo
-      try {
-        await uploadBytes(imageRef, evidenciaFoto);
-        const evidenciaURL = await getDownloadURL(imageRef);
-
-        // Guardamos el registro en Firestore
-        const registro = {
-          nombreAyudante,
-          personaEntrega,
-          fechaHoraRetiro,
-          evidenciaURL,
-          devuelto: false,
-          fechaHoraDevolucion: ""
-        };
-
-        await addDoc(collection(db, 'historial'), registro);
-
-        // Limpiar formulario y actualizar la tabla
-        document.getElementById('nombreAyudante').value = '';
-        document.getElementById('personaEntrega').value = '';
-        document.getElementById('evidenciaFoto').value = '';
-        actualizarHistorial();
-      } catch (error) {
-        console.error("Error al registrar el retiro: ", error);
-      }
-    };
-
-    window.actualizarHistorial = async function() {
-      const historial = await getDocs(collection(db, 'historial'));
-      const tbody = document.getElementById('historial').querySelector('tbody');
-      tbody.innerHTML = '';
-
-      historial.forEach((doc) => {
-        const data = doc.data();
-        const row = document.createElement('tr');
-
-        row.innerHTML = `
-          <td>${data.nombreAyudante}</td>
-          <td>${data.personaEntrega}</td>
-          <td>${data.fechaHoraRetiro}</td>
-          <td><img src="${data.evidenciaURL}" alt="Evidencia" width="50" onclick="verImagen('${data.evidenciaURL}')"></td>
-          <td>${data.devuelto ? data.fechaHoraDevolucion : 'Pendiente'}</td>
-          <td>
-            ${data.devuelto ? 'Devuelto' : `<button class="return-btn" onclick="marcarDevolucion('${doc.id}')">Marcar Devolución</button>`}
-          </td>
-        `;
-
-        tbody.appendChild(row);
-      });
-    };
-
-    // Función para marcar la devolución
-    window.marcarDevolucion = async function(id) {
-      const docRef = doc(db, 'historial', id);
-      const fechaHoraDevolucion = new Date().toLocaleString();
-
-      try {
-        await updateDoc(docRef, {
-          devuelto: true,
-          fechaHoraDevolucion
-        });
-        actualizarHistorial();
-      } catch (error) {
-        console.error("Error al marcar la devolución: ", error);
-      }
-    };
-
-    // Función para mostrar la imagen ampliada en el modal
-    window.verImagen = function(url) {
-      document.getElementById('modalImage').src = url;
-      document.getElementById('modal').style.display = 'flex';
-    };
-
-    // Función para cerrar el modal
-    window.cerrarModal = function() {
-      document.getElementById('modal').style.display = 'none';
-      document.getElementById('modalImage').src = '';
-    };
-
-    // Cargar historial al inicio
-    document.addEventListener('DOMContentLoaded', actualizarHistorial);
-
-    // Asignar el evento al botón de registrar
-    document.getElementById('registrarBtn').addEventListener('click', registrarRetiro);
-  </script>
+  <!-- Sección de limpieza de historial -->
   <div class="container">
     <h2>Limpiar Historial</h2>
     <label>Contraseña:</label>
@@ -177,10 +62,11 @@
     <button onclick="limpiarHistorial()">Limpiar Historial</button>
   </div>
 
-  <!-- Script de Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.20.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.20.0/firebase-storage.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.20.0/firebase-firestore.js"></script>
+  <!-- Modal para ver la imagen ampliada -->
+  <div id="modal" class="modal" onclick="cerrarModal()">
+    <img id="modalImage" src="" alt="Evidencia Ampliada">
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>
