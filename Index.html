@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control de T2P</title>
+  <style>
+    /* Estilos de colores gris y naranja */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #e0e0e0;
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      flex-direction: column;
+    }
+    .container {
+      max-width: 600px;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      color: #FF8C00;
+      text-align: center;
+    }
+    label {
+      color: #555;
+      display: block;
+      margin: 10px 0 5px;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #FF8C00;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #FF7A00;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+    th, td {
+      padding: 8px;
+      text-align: center;
+    }
+    .return-btn {
+      background-color: #FF8C00;
+      color: #fff;
+      padding: 5px 10px;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      border-radius: 4px;
+    }
+    #logo {
+      display: block;
+      margin: 0 auto 20px;
+      max-width: 80px;
+    }
+    .menu-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .hidden {
+      display: none;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal img {
+      max-width: 90%;
+      max-height: 90%;
+      border-radius: 8px;
+    }
+  </style>
+
+  <!-- Agrega Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-storage.js"></script>
+</head>
+<body>
+  <!-- Título y Logo -->
+  <h1>Control de T2P</h1>
+  <img id="logo" src="LOGO CDG COLOR.png" alt="Logo">
+
+  <!-- Botones de menú -->
+  <div class="menu-buttons">
+    <button onclick="mostrarSeccion('registro')">Registrar Retiro</button>
+    <button onclick="mostrarSeccion('historial')">Ver Historial</button>
+  </div>
+
+  <!-- Sección de registro -->
+  <div id="registro" class="container">
+    <label>Nombre del Ayudante:</label>
+    <input type="text" id="nombreAyudante" placeholder="Nombre del Ayudante" required>
+    
+    <label>Persona que Entrega:</label>
+    <input type="text" id="personaEntrega" placeholder="Nombre del que entrega" required>
+    
+    <label>Evidencia Fotográfica:</label>
+    <input type="file" id="evidenciaFoto" accept="image/*" capture="camera">
+    
+    <button onclick="registrarRetiro()">Registrar Retiro</button>
+  </div>
+
+  <!-- Sección de historial -->
+  <div id="historial" class="container hidden">
+    <table>
+      <thead>
+        <tr>
+          <th>Ayudante</th>
+          <th>Entregado por</th>
+          <th>Fecha y Hora de Retiro</th>
+          <th>Evidencia</th>
+          <th>Fecha y Hora de Devolución</th>
+          <th>Devolución</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Aquí se insertarán las filas de historial -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal para ver la imagen ampliada -->
+  <div id="modal" class="modal" onclick="cerrarModal()">
+    <img id="modalImage" src="" alt="Evidencia Ampliada">
+  </div>
+
+  <script>
+    // Configuración de Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDGoBcYaPDQsMFxreFIjn0XraHdkfq3lqc",
+      authDomain: "controldet2p.firebaseapp.com",
+      projectId: "controldet2p",
+      storageBucket: "controldet2p.appspot.com",
+      messagingSenderId: "683643469531",
+      appId: "1:683643469531:web:5c81f09d8361a427e696fe",
+      measurementId: "G-MS62MDX4VX"
+    };
+
+    // Inicializa Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Función para mostrar la sección seleccionada
+    function mostrarSeccion(seccion) {
+      document.getElementById('registro').classList.add('hidden');
+      document.getElementById('historial').classList.add('hidden');
+      document.getElementById(seccion).classList.remove('hidden');
+    }
+
+    // Función para registrar un retiro
+    async function registrarRetiro() {
+      const nombreAyudante = document.getElementById('nombreAyudante').value;
+      const personaEntrega = document.getElementById('personaEntrega').value;
+      const evidenciaFoto = document.getElementById('evidenciaFoto').files[0];
+      
+      if (!nombreAyudante || !personaEntrega || !evidenciaFoto) {
+        alert('Por favor, complete todos los campos');
+        return;
+      }
+
+      const fechaHoraRetiro = new Date().toLocaleString();
+
+      // Guardar el archivo de imagen en Firebase Storage
+      const storageRef = firebase.storage().ref(`evidencias/${evidenciaFoto.name}`);
+      await storageRef.put(evidenciaFoto);
+      const urlEvidencia = await storageRef.getDownloadURL();
+
+      // Guardar el registro en Firestore
+      const registro = {
+        nombreAyudante,
+        personaEntrega,
+        fechaHoraRetiro,
+        evidenciaURL: urlEvidencia,
+        devuelto: false,
+        fechaHoraDevolucion: ""
+      };
+
+      await db.collection('historial').add(registro);
+
+      // Limpiar formulario y actualizar la tabla
+      document.getElementById('nombreAyudante').value = '';
+      document.getElementById('personaEntrega').value = '';
+      document.getElementById('evidenciaFoto').value = '';
+      actualizarHistorial();
+    }
+
+    // Función para actualizar el historial en la tabla
+    async function actualizarHistorial() {
+      const tbody = document.getElementById('historial').querySelector('tbody');
+      tbody.innerHTML = '';
+
+      const snapshot = await db.collection('historial').get();
+      snapshot.forEach(doc => {
+        const registro = doc.data();
+        const row = document.createElement('tr');
+
+        row.innerHTML = `
+          <td>${registro.nombreAyudante}</td>
+          <td>${registro.personaEntrega}</td>
+          <td>${registro.fechaHoraRetiro}</td>
+          <td><img src="${registro.evidenciaURL}" alt="Evidencia" width="50" onclick="verImagen('${registro.evidenciaURL}')"></td>
+          <td>${registro.devuelto ? registro.fechaHoraDevolucion : 'Pendiente'}</td>
+          <td>
+            ${registro.devuelto ? 'Devuelto' : `<button class="return-btn" onclick="marcarDevolucion('${doc.id}')">Marcar Devolución</button>`}
+          </td>
+        `;
+
+        tbody.appendChild(row);
+      });
+    }
+
+    // Función para marcar como devuelto
+    async function marcarDevolucion(id) {
+      await db.collection('historial').doc(id).update({
+        devuelto: true,
+        fechaHoraDevolucion: new Date().toLocaleString()
+      });
+      actualizarHistorial();
+    }
+
+    // Función para mostrar la imagen ampliada en el modal
+    function verImagen(url) {
+      document.getElementById('modalImage').src = url;
+      document.getElementById('modal').style.display = 'flex';
+    }
+
+    // Función para cerrar el modal
+    function cerrarModal() {
+      document.getElementById('modal').style.display = 'none';
+    }
+
+    // Cargar historial al inicio
+    document.addEventListener('DOMContentLoaded', actualizarHistorial);
+  </script>
+</body>
+</html>
