@@ -181,5 +181,17 @@
     // Asignar el evento al botón de registrar
     document.getElementById('registrarBtn').addEventListener('click', registrarRetiro);
   </script>
+  <div class="container">
+    <h2>Limpiar Historial</h2>
+    <label>Contraseña:</label>
+    <input type="password" id="passwordInput" placeholder="Introduce la contraseña" required>
+    <button onclick="limpiarHistorial()">Limpiar Historial</button>
+  </div>
+
+  <!-- Script de Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.20.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.20.0/firebase-storage.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.20.0/firebase-firestore.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
