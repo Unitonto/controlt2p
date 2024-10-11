@@ -73,31 +73,7 @@ window.mostrarSeccion = function(seccion) {
     });
   };
 
-function limpiarHistorial() {
-  const password = document.getElementById('passwordInput').value;
 
-  // Cambia esto por la contraseña que desees
-  const correctPassword = "tuContraseñaSegura"; // Cambia por tu contraseña
-  
-  if (password === correctPassword) {
-    // Limpiar el historial en Firestore
-    db.collection('historial').get().then((snapshot) => {
-      const batch = db.batch();
-      snapshot.docs.forEach((doc) => {
-        batch.delete(doc.ref);
-      });
-      return batch.commit();
-    }).then(() => {
-      actualizarHistorial(); // Actualiza la tabla después de limpiar
-      alert('Historial limpiado con éxito.');
-      document.getElementById('passwordInput').value = ''; // Limpiar el campo de entrada
-    }).catch((error) => {
-      console.error("Error al limpiar el historial: ", error);
-    });
-  } else {
-    alert('Contraseña incorrecta. Inténtalo de nuevo.');
-  }
-}
 // Cargar historial al inicio
   document.addEventListener('DOMContentLoaded', actualizarHistorial);
 
