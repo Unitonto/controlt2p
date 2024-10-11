@@ -91,11 +91,13 @@ window.limpiarHistorial = async () => {
     if (password === correctPassword) {
         // Limpiar el historial en Firestore
         const snapshot = await getDocs(collection(db, 'historial'));
-        const batch = db.batch();
+        const batch = writeBatch(db); // Crear un nuevo batch
+
         snapshot.docs.forEach((doc) => {
-            batch.delete(doc.ref);
+            batch.delete(doc.ref); // Agregar la operación de eliminación al batch
         });
-        await batch.commit();
+
+        await batch.commit(); // Ejecutar todas las operaciones de eliminación en el batch
         actualizarHistorial(); // Actualiza la tabla después de limpiar
         alert('Historial limpiado con éxito.');
         document.getElementById('passwordInput').value = ''; // Limpiar el campo de entrada
@@ -103,3 +105,4 @@ window.limpiarHistorial = async () => {
         alert('Contraseña incorrecta. Inténtalo de nuevo.');
     }
 };
+
