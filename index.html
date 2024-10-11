@@ -46,17 +46,6 @@
     </table>
   </div>
 
-  <div id="modal" class="modal" onclick="cerrarModal()">
-    <img id="modalImage" src="" alt="Evidencia Ampliada">
-  </div>
-  <!-- Sección de limpieza de historial -->
-<div class="container">
-  <h2>Limpiar Historial</h2>
-  <label>Contraseña:</label>
-  <input type="password" id="passwordInput" placeholder="Introduce la contraseña" required>
-  <button onclick="limpiarHistorial()">Limpiar Historial</button>
-</div>
-
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-firestore.js";
