@@ -5,11 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Control de T2P</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Importar Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getFirestore } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
-        import { getStorage } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
+        import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDGoBcYaPDQsMFxreFIjn0XraHdkfq3lqc",
@@ -23,8 +22,8 @@
 
         // Inicializar Firebase
         const app = initializeApp(firebaseConfig);
-        window.db = getFirestore(app);
-        window.storage = getStorage(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
 
         // Exponer funciones al objeto global
         window.mostrarSeccion = (seccion) => {
@@ -44,9 +43,9 @@
             }
 
             const fechaHoraRetiro = new Date().toLocaleString();
-            const storageRef = window.storage.ref('evidencias/' + evidenciaFoto.name);
-            await storageRef.put(evidenciaFoto);
-            const evidenciaURL = await storageRef.getDownloadURL();
+            const storageRef = ref(storage, 'evidencias/' + evidenciaFoto.name);
+            await uploadBytes(storageRef, evidenciaFoto);
+            const evidenciaURL = await getDownloadURL(storageRef);
 
             // Guardamos el registro en Firestore
             const registro = {
@@ -58,13 +57,36 @@
                 fechaHoraDevolucion: ""
             };
 
-            await db.collection('historial').add(registro);
+            await addDoc(collection(db, 'historial'), registro);
             
             // Limpiar formulario y actualizar la tabla
             document.getElementById('nombreAyudante').value = '';
             document.getElementById('personaEntrega').value = '';
             document.getElementById('evidenciaFoto').value = '';
             actualizarHistorial();
+        };
+
+        // Función para actualizar el historial en la tabla
+        window.actualizarHistorial = async () => {
+            const tbody = document.getElementById('historial').querySelector('tbody');
+            tbody.innerHTML = '';
+            
+            const snapshot = await getDocs(collection(db, 'historial'));
+            snapshot.forEach(doc => {
+                const registro = doc.data();
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${registro.nombreAyudante}</td>
+                    <td>${registro.personaEntrega}</td>
+                    <td>${registro.fechaHoraRetiro}</td>
+                    <td><img src="${registro.evidenciaURL}" alt="Evidencia" width="50" onclick="verImagen('${registro.evidenciaURL}')"></td>
+                    <td>${registro.devuelto ? registro.fechaHoraDevolucion : 'Pendiente'}</td>
+                    <td>
+                        ${registro.devuelto ? 'Devuelto' : `<button class="return-btn" onclick="marcarDevolucion('${doc.id}')">Marcar Devolución</button>`}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
         };
 
         // Otras funciones...
@@ -130,4 +152,5 @@
     <script src="script.js" type="module"></script>
 </body>
 </html>
+
 
